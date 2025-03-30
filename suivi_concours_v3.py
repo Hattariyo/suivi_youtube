@@ -61,9 +61,12 @@ df["rank"] = df.index + 1
 df["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # Historique complet
-if os.path.exists(HISTO_FILE):
-    historique = pd.read_csv(HISTO_FILE)
-    df_concat = pd.concat([historique, df], ignore_index=True)
+if os.path.exists(HISTO_FILE) and os.path.getsize(HISTO_FILE) > 0:
+    try:
+        historique = pd.read_csv(HISTO_FILE)
+        df_concat = pd.concat([historique, df], ignore_index=True)
+    except pd.errors.EmptyDataError:
+        df_concat = df
 else:
     df_concat = df
 
