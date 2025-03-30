@@ -61,17 +61,14 @@ df["rank"] = df.index + 1
 df["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # Historique complet
-if os.path.exists(HISTO_FILE) and os.path.getsize(HISTO_FILE) > 0:
-    try:
-        historique = pd.read_csv(HISTO_FILE)
-        df_concat = pd.concat([historique, df], ignore_index=True)
-    except pd.errors.EmptyDataError:
-        df_concat = df
+if os.path.exists(HISTO_FILE):
+    historique = pd.read_csv(HISTO_FILE, encoding="utf-8")
+    df_concat = pd.concat([historique, df], ignore_index=True)
 else:
     df_concat = df
 
 # Enregistrer
 cols = ["timestamp", "video_id", "title", "likes", "rank"]
-df_concat[cols].to_csv(HISTO_FILE, index=False)
+df_concat[cols].to_csv(HISTO_FILE, index=False, encoding="utf-8")
 
 print("✅ historique_complet.csv mis à jour avec", len(df), "vidéos.")
