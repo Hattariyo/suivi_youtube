@@ -4,14 +4,14 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2 import service_account
 
-# ID de tes fichiers Google Drive
+# ✅ IDs actuels de tes fichiers Google Drive
 FILE_IDS = {
-    "historique_complet.csv": "1qFUHW811O3DsMv8bRducbc4l0L3VRYY5",
-    "classement_youtube.csv": "1F5XghVQghx1KZD7_ZRPSEVOjQbyXxDj2",
-    "dashboard.py": "1YW4Eq-FVWbAgJR6Cv6tuqGMsmpoj219H"  # ✅ ID corrigé
+    "historique_complet.csv": "1Oi5kWc173-Z4ecnySTkbz6hffuYigXri",
+    "classement_youtube.csv": "1c0LeysCYhrKr6JaXD6w-XCHmPMwpXvAu",
+    "dashboard.py": "1YW4Eq-FVWbAgJR6Cv6tuqGMsmpoj219H"
 }
 
-# Authentification
+# 🔐 Authentification avec le compte de service
 def get_drive_service():
     SCOPES = ['https://www.googleapis.com/auth/drive']
     SERVICE_ACCOUNT_FILE = 'credentials.json'
@@ -19,7 +19,7 @@ def get_drive_service():
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     return build('drive', 'v3', credentials=credentials)
 
-# Téléchargement des fichiers
+# ⬇️ Téléchargement des fichiers depuis Drive
 def update_files_from_drive():
     service = get_drive_service()
     for filename, file_id in FILE_IDS.items():
@@ -30,3 +30,7 @@ def update_files_from_drive():
         while not done:
             _, done = downloader.next_chunk()
         print(f"✅ {filename} mis à jour depuis Drive")
+
+# Lancer la fonction si le script est exécuté directement
+if __name__ == "__main__":
+    update_files_from_drive()
