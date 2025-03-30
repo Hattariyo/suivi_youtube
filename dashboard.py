@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# 🟡 Fichiers locaux (plus de Drive)
+# Liens vers les fichiers locaux (plus de Drive)
 HISTORIQUE_PATH = "historique_complet.csv"
 CLASSEMENT_PATH = "classement_youtube.csv"
 
@@ -15,63 +15,66 @@ def load_data():
 
 historique, classement = load_data()
 
-# 🎯 Vidéo Ulysse par défaut (recherche par mot-clé)
-default_video = next((title for title in classement["title"] if "ulysse" in title.lower()), None)
-
 # Titre
-st.markdown("## 🎟️ Suivi du concours YouTube - Les Trésors d'Ulysse")
+st.title("🎟️ Suivi du concours YouTube - Les Trésors d'Ulysse")
 
-# Liste des vidéos
+# Vidéo par défaut = Les Trésors d'Ulysse
+titre_defaut = "Les Trésors d'Ulysse (Hauts de France) - Gaëlle Vasse"
 videos = classement["title"].tolist()
-selected_videos = st.multiselect("Choisis les vidéos à afficher :", videos, default=[default_video] if default_video else videos[:1])
+default_video = [v for v in videos if "Les Trésors d'Ulysse" in v]
+selected_videos = st.multiselect("Choisis les vidéos à afficher :", videos, default=default_video)
 
-# Sélecteur de métrique
+# Choix de la métrique
 metric = st.radio("Afficher :", ["Likes", "Rang"], horizontal=True)
 
-# 🔍 Filtrage
+# Filtrage historique
 historique_selected = historique[historique["title"].isin(selected_videos)]
 
-# 📈 Graphique principal
-st.markdown("### 📊 Évolution des likes" if metric == "Likes" else "### 📉 Évolution du rang")
-fig = px.line(
-    historique_selected,
-    x="timestamp",
-    y="likes" if metric == "Likes" else "rank",
-    color="title",
-    height=500
-)
-if metric == "Rang":
-    fig.update_yaxes(title="rang", autorange="reversed")
-st.plotly_chart(fig, use_container_width=True)
+# Graphique principal
+if not historique_selected.empty:
+    st.markdown("### 📉 Évolution des likes" if metric == "Likes" else "### 📈 Évolution du rang")
+    fig = px.line(
+        historique_selected,
+        x="timestamp",
+        y="likes" if metric == "Likes" else "rank",
+        color="title",
+        height=500,
+    )
+    if metric == "Rang":
+        fig.update_yaxes(autorange="reversed", title="Rang")
+    else:
+        fig.update_yaxes(title="Likes")
+    st.plotly_chart(fig, use_container_width=True)
 
-# 🏆 Tableau du top 20
-st.markdown("### 🏆 Classement actuel (Top 20)")
-top20 = classement.sort_values("rank").head(20)[["rank", "title", "likes", "views"]]
-top20 = top20.sort_values("rank")
-top20.index = range(1, 21)
+# 📊 Classement tableau
+st.markdown("### 🏆 Classement actuel du Top 20")
+top20 = classement.sort_values("rank").head(20)[["rank", "title", "likes"]]
+top20 = top20.rename(columns={"rank": "Rang", "title": "Titre", "likes": "Likes"})
 st.dataframe(top20, use_container_width=True)
 
-# 📈 Graphique des likes (top 20)
-st.markdown("### 📈 Évolution des likes (Top 20)")
-top20_ids = top20["title"].tolist()
+# 🔁 Graphiques Top 20
+top20_ids = top20["Titre"].tolist()
 historique_top20 = historique[historique["title"].isin(top20_ids)]
+
+# Likes dans le temps (Top 20)
+st.markdown("### 📊 Évolution des likes (Top 20)")
 fig_likes = px.line(
     historique_top20,
     x="timestamp",
     y="likes",
     color="title",
-    height=600
+    height=500,
 )
 st.plotly_chart(fig_likes, use_container_width=True)
 
-# 📉 Graphique du classement (top 20)
-st.markdown("### 📉 Classement dans le temps (Top 20)")
+# Rang dans le temps (Top 20)
+st.markdown("### 🧭 Classement dans le temps (Top 20)")
 fig_rank = px.line(
     historique_top20,
     x="timestamp",
     y="rank",
     color="title",
-    height=600
+    height=500,
 )
-fig_rank.update_yaxes(title="rang", autorange="reversed")
+fig_rank.update_yaxes(autorange="reversed", title="Rang")
 st.plotly_chart(fig_rank, use_container_width=True)
