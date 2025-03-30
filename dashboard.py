@@ -1,11 +1,10 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Liens Google Drive en mode "téléchargement direct"
-HISTORIQUE_URL = "https://drive.google.com/uc?id=1Oi5kWc173-Z4ecnySTkbz6hffuYigXri"
-CLASSEMENT_URL = "https://drive.google.com/uc?id=1c0LeysCYhrKr6JaXD6w-XCHmPMwpXvAu"
+# Liens Google Drive en mode téléchargement direct
+HISTORIQUE_URL = "https://drive.google.com/uc?export=download&id=1Oi5kWc173-Z4ecnySTkbz6hffuYigXri"
+CLASSEMENT_URL = "https://drive.google.com/uc?export=download&id=1c0LeysCYhrKr6JaXD6w-XCHmPMwpXvAu"
 
 # Chargement des données
 @st.cache_data
@@ -32,7 +31,7 @@ metric = st.radio("Afficher :", ["Likes", "Rang"], horizontal=True)
 # Filtrage de l'historique pour les vidéos sélectionnées
 historique_selected = historique[historique["title"].isin(selected_videos)]
 
-# Graphique d'évolution des likes ou du rang
+# Graphique principal
 if metric == "Likes":
     fig = px.line(
         historique_selected,
@@ -52,9 +51,9 @@ else:
     )
     fig.update_yaxes(title="rang", autorange="reversed")
 
-st.plotly_chart(fig, use_container_width=True, height=500)
+st.plotly_chart(fig, use_container_width=True)
 
-# 🏆 Classement top 20 actuel sous forme de tableau
+# 🏆 Tableau : classement top 20 actuel
 st.markdown("### 🏆 Classement actuel du Top 20")
 top20 = classement.sort_values("rank").head(20)[["rank", "title", "likes", "views"]]
 st.dataframe(top20.style.format({"likes": "{:,}", "views": "{:,}"}), use_container_width=True)
@@ -63,7 +62,7 @@ st.dataframe(top20.style.format({"likes": "{:,}", "views": "{:,}"}), use_contain
 top20_ids = top20["title"].tolist()
 top20_historique = historique[historique["title"].isin(top20_ids)]
 
-# 📊 Graphique de l'évolution des likes
+# 📊 Évolution des likes (Top 20)
 fig_likes = px.line(
     top20_historique,
     x="timestamp",
@@ -71,15 +70,15 @@ fig_likes = px.line(
     color="title",
     title="📊 Évolution des likes (Top 20)"
 )
-st.plotly_chart(fig_likes, use_container_width=True, height=600)
+st.plotly_chart(fig_likes, use_container_width=True)
 
-# 📈 Graphique de l'évolution du classement (rang)
+# 📈 Évolution du classement (Top 20)
 fig_rank = px.line(
     top20_historique,
     x="timestamp",
     y="rank",
     color="title",
-    title="📉 Classement dans le temps (Top 20)"
+    title="📈 Évolution du classement (Top 20)"
 )
 fig_rank.update_yaxes(title="rang", autorange="reversed")
-st.plotly_chart(fig_rank, use_container_width=True, height=600)
+st.plotly_chart(fig_rank, use_container_width=True)
