@@ -2,83 +2,76 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Liens Google Drive en mode téléchargement direct
-HISTORIQUE_URL = "https://drive.google.com/uc?export=download&id=1Oi5kWc173-Z4ecnySTkbz6hffuYigXri"
-CLASSEMENT_URL = "https://drive.google.com/uc?export=download&id=1c0LeysCYhrKr6JaXD6w-XCHmPMwpXvAu"
+# 🟡 Fichiers locaux (plus de Drive)
+HISTORIQUE_PATH = "historique_complet.csv"
+CLASSEMENT_PATH = "classement_youtube.csv"
 
 # Chargement des données
 @st.cache_data
 def load_data():
-    historique = pd.read_csv(HISTORIQUE_URL)
-    classement = pd.read_csv(CLASSEMENT_URL)
+    historique = pd.read_csv(HISTORIQUE_PATH)
+    classement = pd.read_csv(CLASSEMENT_PATH)
     return historique, classement
 
 historique, classement = load_data()
 
-# Sélection de la vidéo "Les Trésors d'Ulysse" par défaut
-ulysse_title = classement[classement["title"].str.contains("Trésors d'Ulysse", case=False, na=False)]["title"].iloc[0]
+# 🎯 Vidéo Ulysse par défaut (recherche par mot-clé)
+default_video = next((title for title in classement["title"] if "ulysse" in title.lower()), None)
 
-# Titre du dashboard
-st.title("🎟️ Suivi du concours YouTube - Les Trésors d'Ulysse")
+# Titre
+st.markdown("## 🎟️ Suivi du concours YouTube - Les Trésors d'Ulysse")
 
-# Liste déroulante pour sélectionner une ou plusieurs vidéos
+# Liste des vidéos
 videos = classement["title"].tolist()
-selected_videos = st.multiselect("Choisis les vidéos à afficher :", videos, default=[ulysse_title])
+selected_videos = st.multiselect("Choisis les vidéos à afficher :", videos, default=[default_video] if default_video else videos[:1])
 
-# Sélecteur du type de données à afficher
+# Sélecteur de métrique
 metric = st.radio("Afficher :", ["Likes", "Rang"], horizontal=True)
 
-# Filtrage de l'historique pour les vidéos sélectionnées
+# 🔍 Filtrage
 historique_selected = historique[historique["title"].isin(selected_videos)]
 
-# Graphique principal
-if metric == "Likes":
-    fig = px.line(
-        historique_selected,
-        x="timestamp",
-        y="likes",
-        color="title",
-        title="📈 Évolution des likes"
-    )
-    fig.update_yaxes(title="likes")
-else:
-    fig = px.line(
-        historique_selected,
-        x="timestamp",
-        y="rank",
-        color="title",
-        title="📉 Évolution du rang"
-    )
+# 📈 Graphique principal
+st.markdown("### 📊 Évolution des likes" if metric == "Likes" else "### 📉 Évolution du rang")
+fig = px.line(
+    historique_selected,
+    x="timestamp",
+    y="likes" if metric == "Likes" else "rank",
+    color="title",
+    height=500
+)
+if metric == "Rang":
     fig.update_yaxes(title="rang", autorange="reversed")
-
 st.plotly_chart(fig, use_container_width=True)
 
-# 🏆 Tableau : classement top 20 actuel
-st.markdown("### 🏆 Classement actuel du Top 20")
+# 🏆 Tableau du top 20
+st.markdown("### 🏆 Classement actuel (Top 20)")
 top20 = classement.sort_values("rank").head(20)[["rank", "title", "likes", "views"]]
-st.dataframe(top20.style.format({"likes": "{:,}", "views": "{:,}"}), use_container_width=True)
+top20 = top20.sort_values("rank")
+top20.index = range(1, 21)
+st.dataframe(top20, use_container_width=True)
 
-# 🔁 Historique du top 20
+# 📈 Graphique des likes (top 20)
+st.markdown("### 📈 Évolution des likes (Top 20)")
 top20_ids = top20["title"].tolist()
-top20_historique = historique[historique["title"].isin(top20_ids)]
-
-# 📊 Évolution des likes (Top 20)
+historique_top20 = historique[historique["title"].isin(top20_ids)]
 fig_likes = px.line(
-    top20_historique,
+    historique_top20,
     x="timestamp",
     y="likes",
     color="title",
-    title="📊 Évolution des likes (Top 20)"
+    height=600
 )
 st.plotly_chart(fig_likes, use_container_width=True)
 
-# 📈 Évolution du classement (Top 20)
+# 📉 Graphique du classement (top 20)
+st.markdown("### 📉 Classement dans le temps (Top 20)")
 fig_rank = px.line(
-    top20_historique,
+    historique_top20,
     x="timestamp",
     y="rank",
     color="title",
-    title="📈 Évolution du classement (Top 20)"
+    height=600
 )
 fig_rank.update_yaxes(title="rang", autorange="reversed")
 st.plotly_chart(fig_rank, use_container_width=True)
