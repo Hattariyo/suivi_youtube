@@ -79,4 +79,4 @@ fig_rank = px.line(
 fig_rank.update_yaxes(title="rang", autorange="reversed")
 st.plotly_chart(fig_rank)
 
-# mise Ã  jour automatique
+# mise à jour automatique
